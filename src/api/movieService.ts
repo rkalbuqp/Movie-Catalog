@@ -1,24 +1,39 @@
 import axios from 'axios'
-import type { Movie, PaginatedResponse } from '../types'
+import type { Movie, Genre, PaginatedResponse } from '../types/movie'
 
-const apiKey = import.meta.env.VITE_TMDB
-const accessToken = import.meta.env.VITE_TMDB_API_KEY
-
-const tmdbClient = axios.create({
+const api = axios.create({
   baseURL: 'https://api.themoviedb.org/3',
-  headers: {
-    Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json;charset=utf-8',
-  },
   params: {
-    api_key: apiKey,
+    api_key: import.meta.env.VITE_TMDB,
+    language: 'pt-BR',
   },
 })
 
-export async function getPopularMovies(page = 1): Promise<PaginatedResponse<Movie>> {
-  const response = await tmdbClient.get<PaginatedResponse<Movie>>('/movie/popular', {
+export const getPopularMovies = async (
+  page = 1,
+): Promise<PaginatedResponse<Movie>> => {
+  const { data } = await api.get<PaginatedResponse<Movie>>('/movie/popular', {
     params: { page },
   })
+  return data
+}
 
-  return response.data
+export const searchMovies = async (
+  query: string,
+  page = 1,
+): Promise<PaginatedResponse<Movie>> => {
+  const { data } = await api.get<PaginatedResponse<Movie>>('/search/movie', {
+    params: { query, page },
+  })
+  return data
+}
+
+export const getMovieDetails = async (id: string): Promise<Movie> => {
+  const { data } = await api.get<Movie>(`/movie/${id}`)
+  return data
+}
+
+export const getGenres = async (): Promise<Genre[]> => {
+  const { data } = await api.get<{ genres: Genre[] }>('/genre/movie/list')
+  return data.genres
 }
