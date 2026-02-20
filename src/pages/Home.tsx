@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Movie } from '../types/movie'
 import { getPopularMovies } from '../api/movieService'
@@ -9,6 +9,7 @@ function Home() {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   const loadMovies = async (pageToLoad: number) => {
     try {
@@ -31,11 +32,30 @@ function Home() {
     loadMovies(1)
   }, [])
 
-  const handleLoadMore = () => {
-    if (page < totalPages && !loading) {
-      loadMovies(page + 1)
+  useEffect(() => {
+    const target = loadMoreRef.current
+    if (!target) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries
+        if (entry.isIntersecting && page < totalPages && !loading) {
+          loadMovies(page + 1)
+        }
+      },
+      {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0.1,
+      },
+    )
+
+    observer.observe(target)
+
+    return () => {
+      observer.disconnect()
     }
-  }
+  }, [page, totalPages, loading])
 
   return (
     <main style={{ padding: '2rem' }}>
@@ -96,11 +116,10 @@ function Home() {
       </section>
 
       {movies.length > 0 && page < totalPages && (
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <button type="button" onClick={handleLoadMore} disabled={loading}>
-            {loading ? 'Carregando...' : 'Carregar mais'}
-          </button>
-        </div>
+        <div
+          ref={loadMoreRef}
+          style={{ height: '1px', marginTop: '2rem' }}
+        />
       )}
     </main>
   )
