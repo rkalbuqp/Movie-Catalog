@@ -1,3 +1,8 @@
+export interface Genre {
+  id: number
+  name: string
+}
+
 export interface Movie {
   id: number
   title: string
@@ -7,11 +12,7 @@ export interface Movie {
   release_date: string
   vote_average: number
   genre_ids: number[]
-}
-
-export interface Genre {
-  id: number
-  name: string
+  genres?: Genre[]
 }
 
 export interface PaginatedResponse<T> {
@@ -20,4 +21,3 @@ export interface PaginatedResponse<T> {
   total_pages: number
   total_results: number
 }
-
