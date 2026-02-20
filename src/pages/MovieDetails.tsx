@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import type { Movie } from '../types/movie'
 import { getMovieDetails } from '../api/movieService'
+import styles from './MovieDetails.module.css'
 
 function MovieDetails() {
   const { id } = useParams()
@@ -9,40 +10,52 @@ function MovieDetails() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const loadMovie = async () => {
-      if (!id) return
+  const loadMovie = async () => {
+    if (!id) return
 
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await getMovieDetails(id)
-        setMovie(data)
-      } catch {
-        setError('Erro ao carregar detalhes do filme.')
-      } finally {
-        setLoading(false)
-      }
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getMovieDetails(id)
+      setMovie(data)
+    } catch {
+      setError('Erro ao carregar detalhes do filme.')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadMovie()
   }, [id])
 
-  if (loading) {
+  if (loading && !movie) {
     return (
-      <main style={{ padding: '2rem' }}>
-        <p>Carregando...</p>
+      <main className={styles.page}>
+        <section className={styles.skeletonBanner} />
+        <section className={styles.synopsisSection}>
+          <div className={styles.skeletonParagraph} />
+          <div className={styles.skeletonParagraph} />
+          <div className={styles.skeletonParagraph} />
+        </section>
       </main>
     )
   }
 
-  if (error) {
+  if (error && !movie) {
     return (
-      <main style={{ padding: '2rem' }}>
-        <p>{error}</p>
-        <p>
-          <Link to="/">Voltar para a home</Link>
-        </p>
+      <main className={styles.page}>
+        <section className={styles.synopsisSection}>
+          <p>{error}</p>
+          <div className={styles.backLink}>
+            <button type="button" onClick={loadMovie}>
+              Tentar novamente
+            </button>
+          </div>
+          <p className={styles.backLink}>
+            <Link to="/">Voltar para a home</Link>
+          </p>
+        </section>
       </main>
     )
   }
@@ -60,52 +73,36 @@ function MovieDetails() {
     : undefined
 
   return (
-    <main>
+    <main className={styles.page}>
       <section
-        style={{
-          position: 'relative',
-          minHeight: '300px',
-          color: '#fff',
-          backgroundColor: '#111827',
-          backgroundImage: bannerUrl
-            ? `linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.3)), url(${bannerUrl})`
-            : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        className={styles.banner}
+        style={
+          bannerUrl
+            ? {
+                backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.3)), url(${bannerUrl})`,
+              }
+            : undefined
+        }
       >
-        <div
-          style={{
-            display: 'flex',
-            gap: '2rem',
-            padding: '2rem',
-            maxWidth: '960px',
-            margin: '0 auto',
-          }}
-        >
+        <div className={styles.bannerContent}>
           {posterUrl && (
             <img
               src={posterUrl}
               alt={movie.title}
-              style={{
-                width: '200px',
-                borderRadius: '8px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-                flexShrink: 0,
-              }}
+              className={styles.poster}
             />
           )}
 
           <div>
-            <h1 style={{ margin: '0 0 0.5rem' }}>{movie.title}</h1>
-            <p style={{ margin: '0 0 0.75rem', opacity: 0.9 }}>
+            <h1 className={styles.infoTitle}>{movie.title}</h1>
+            <p className={styles.infoText}>
               Nota: {movie.vote_average.toFixed(1)}
             </p>
-            <p style={{ margin: '0 0 0.75rem', opacity: 0.9 }}>
+            <p className={styles.infoText}>
               Data de lançamento: {movie.release_date}
             </p>
             {movie.genres && movie.genres.length > 0 && (
-              <p style={{ margin: '0 0 1rem', opacity: 0.9 }}>
+              <p className={styles.infoText}>
                 Gêneros: {movie.genres.map((genre) => genre.name).join(', ')}
               </p>
             )}
@@ -113,16 +110,10 @@ function MovieDetails() {
         </div>
       </section>
 
-      <section
-        style={{
-          maxWidth: '960px',
-          margin: '2rem auto',
-          padding: '0 2rem 2rem',
-        }}
-      >
+      <section className={styles.synopsisSection}>
         <h2>Sinopse</h2>
-        <p style={{ lineHeight: 1.6 }}>{movie.overview}</p>
-        <p style={{ marginTop: '2rem' }}>
+        <p>{movie.overview}</p>
+        <p className={styles.backLink}>
           <Link to="/">Voltar para a home</Link>
         </p>
       </section>

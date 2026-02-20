@@ -1,0 +1,116 @@
+.page {
+  padding: 2rem;
+}
+
+.error {
+  color: #fca5a5;
+  margin-top: 0.75rem;
+}
+
+.errorActions {
+  margin-top: 0.5rem;
+}
+
+.errorButton {
+  border-radius: 9999px;
+  border: 1px solid #4b5563;
+  padding: 0.35rem 0.9rem;
+  background-color: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.errorButton:hover {
+  border-color: #9ca3af;
+}
+
+.filters {
+  margin: 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid #4b5563;
+  background-color: #111827;
+  color: inherit;
+}
+
+.searchInput::placeholder {
+  opacity: 0.7;
+}
+
+.select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 9999px;
+  border: 1px solid #4b5563;
+  background-color: #111827;
+  color: inherit;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.card {
+  background-color: #1f2933;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.cardLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.poster {
+  width: 100%;
+  display: block;
+}
+
+.cardBody {
+  padding: 0.75rem;
+}
+
+.cardTitle {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.cardRating {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.8;
+}
+
+.skeletonCard {
+  height: 260px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #1f2933 25%, #111827 37%, #1f2933 63%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@media (min-width: 768px) {
+  .page {
+    padding: 2.5rem 3rem;
+  }
+}
+

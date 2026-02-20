@@ -5,7 +5,10 @@ import {
   getGenres,
   getMoviesByGenre,
   getPopularMovies,
+  searchMovies,
 } from '../api/movieService'
+import { useDebounce } from '../hooks/useDebounce'
+import styles from './Home.module.css'
 
 function Home() {
   const [movies, setMovies] = useState<Movie[]>([])
@@ -15,19 +18,24 @@ function Home() {
   const [error, setError] = useState<string | null>(null)
   const [genres, setGenres] = useState<Genre[]>([])
   const [selectedGenre, setSelectedGenre] = useState<number | 'all'>('all')
+  const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearchTerm = useDebounce(searchTerm, 500)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   const loadMovies = async (
     pageToLoad: number,
     genreOverride?: number | 'all',
+    searchOverride?: string,
   ) => {
     const genreToUse = genreOverride ?? selectedGenre
+    const searchToUse = searchOverride ?? debouncedSearchTerm
 
     try {
       setLoading(true)
       setError(null)
-      const data =
-        genreToUse === 'all'
+      const data = searchToUse.trim()
+        ? await searchMovies(searchToUse, pageToLoad)
+        : genreToUse === 'all'
           ? await getPopularMovies(pageToLoad)
           : await getMoviesByGenre(genreToUse, pageToLoad)
       setMovies((prev) =>
@@ -45,11 +53,13 @@ function Home() {
   useEffect(() => {
     const loadInitialMovies = async () => {
       setMovies([])
-      await loadMovies(1, selectedGenre)
+      setPage(1)
+      setTotalPages(1)
+      await loadMovies(1, selectedGenre, debouncedSearchTerm)
     }
 
     loadInitialMovies()
-  }, [selectedGenre])
+  }, [selectedGenre, debouncedSearchTerm])
 
   useEffect(() => {
     const loadAllGenres = async () => {
@@ -89,16 +99,40 @@ function Home() {
     }
   }, [page, totalPages, loading])
 
+  const showSkeleton = loading && movies.length === 0
+
   return (
-    <main style={{ padding: '2rem' }}>
+    <main className={styles.page}>
       <h1>Filmes populares</h1>
 
-      {error && <p>{error}</p>}
+      {error && (
+        <div className={styles.error}>
+          <p>{error}</p>
+          <div className={styles.errorActions}>
+            <button
+              type="button"
+              className={styles.errorButton}
+              onClick={() => loadMovies(page || 1)}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </div>
+      )}
 
-      <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+      <div className={styles.filters}>
+        <input
+          className={styles.searchInput}
+          type="text"
+          placeholder="Buscar filmes..."
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+        />
+
         <label>
           Gênero:{' '}
           <select
+            className={styles.select}
             value={selectedGenre === 'all' ? '' : selectedGenre}
             onChange={(event) => {
               const value = event.target.value
@@ -115,63 +149,34 @@ function Home() {
         </label>
       </div>
 
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-          gap: '1rem',
-          marginTop: '1.5rem',
-        }}
-      >
-        {movies.map((movie) => (
-          <article
-            key={movie.id}
-            style={{
-              backgroundColor: '#1f2933',
-              borderRadius: '8px',
-              overflow: 'hidden',
-            }}
-          >
-            <Link
-              to={`/movie/${movie.id}`}
-              style={{ color: 'inherit', textDecoration: 'none' }}
-            >
-              {movie.poster_path && (
-                <img
-                  src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                  alt={movie.title}
-                  style={{ width: '100%', display: 'block' }}
-                />
-              )}
-              <div style={{ padding: '0.75rem' }}>
-                <h2
-                  style={{
-                    fontSize: '1rem',
-                    margin: '0 0 0.5rem',
-                  }}
-                >
-                  {movie.title}
-                </h2>
-                <p
-                  style={{
-                    fontSize: '0.875rem',
-                    margin: 0,
-                    opacity: 0.8,
-                  }}
-                >
-                  Nota: {movie.vote_average.toFixed(1)}
-                </p>
-              </div>
-            </Link>
-          </article>
-        ))}
+      <section className={styles.grid}>
+        {showSkeleton
+          ? Array.from({ length: 12 }).map((_, index) => (
+              <div key={index} className={styles.skeletonCard} />
+            ))
+          : movies.map((movie) => (
+              <article key={movie.id} className={styles.card}>
+                <Link to={`/movie/${movie.id}`} className={styles.cardLink}>
+                  {movie.poster_path && (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                      alt={movie.title}
+                      className={styles.poster}
+                    />
+                  )}
+                  <div className={styles.cardBody}>
+                    <h2 className={styles.cardTitle}>{movie.title}</h2>
+                    <p className={styles.cardRating}>
+                      Nota: {movie.vote_average.toFixed(1)}
+                    </p>
+                  </div>
+                </Link>
+              </article>
+            ))}
       </section>
 
       {movies.length > 0 && page < totalPages && (
-        <div
-          ref={loadMoreRef}
-          style={{ height: '1px', marginTop: '2rem' }}
-        />
+        <div ref={loadMoreRef} style={{ height: '1px', marginTop: '2rem' }} />
       )}
     </main>
   )
