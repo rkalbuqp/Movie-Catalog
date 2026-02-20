@@ -37,3 +37,13 @@ export const getGenres = async (): Promise<Genre[]> => {
   const { data } = await api.get<{ genres: Genre[] }>('/genre/movie/list')
   return data.genres
 }
+
+export const getMoviesByGenre = async (
+  genreId: number,
+  page = 1,
+): Promise<PaginatedResponse<Movie>> => {
+  const { data } = await api.get<PaginatedResponse<Movie>>('/discover/movie', {
+    params: { with_genres: genreId, page },
+  })
+  return data
+}

@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { Movie } from '../types/movie'
-import { getPopularMovies } from '../api/movieService'
+import type { Movie, Genre } from '../types/movie'
+import {
+  getGenres,
+  getMoviesByGenre,
+  getPopularMovies,
+} from '../api/movieService'
 
 function Home() {
   const [movies, setMovies] = useState<Movie[]>([])
@@ -9,13 +13,23 @@ function Home() {
   const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [genres, setGenres] = useState<Genre[]>([])
+  const [selectedGenre, setSelectedGenre] = useState<number | 'all'>('all')
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  const loadMovies = async (pageToLoad: number) => {
+  const loadMovies = async (
+    pageToLoad: number,
+    genreOverride?: number | 'all',
+  ) => {
+    const genreToUse = genreOverride ?? selectedGenre
+
     try {
       setLoading(true)
       setError(null)
-      const data = await getPopularMovies(pageToLoad)
+      const data =
+        genreToUse === 'all'
+          ? await getPopularMovies(pageToLoad)
+          : await getMoviesByGenre(genreToUse, pageToLoad)
       setMovies((prev) =>
         pageToLoad === 1 ? data.results : [...prev, ...data.results],
       )
@@ -29,7 +43,25 @@ function Home() {
   }
 
   useEffect(() => {
-    loadMovies(1)
+    const loadInitialMovies = async () => {
+      setMovies([])
+      await loadMovies(1, selectedGenre)
+    }
+
+    loadInitialMovies()
+  }, [selectedGenre])
+
+  useEffect(() => {
+    const loadAllGenres = async () => {
+      try {
+        const data = await getGenres()
+        setGenres(data)
+      } catch {
+        setGenres([])
+      }
+    }
+
+    loadAllGenres()
   }, [])
 
   useEffect(() => {
@@ -62,6 +94,26 @@ function Home() {
       <h1>Filmes populares</h1>
 
       {error && <p>{error}</p>}
+
+      <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+        <label>
+          Gênero:{' '}
+          <select
+            value={selectedGenre === 'all' ? '' : selectedGenre}
+            onChange={(event) => {
+              const value = event.target.value
+              setSelectedGenre(value === '' ? 'all' : Number(value))
+            }}
+          >
+            <option value="">Todos</option>
+            {genres.map((genre) => (
+              <option key={genre.id} value={genre.id}>
+                {genre.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <section
         style={{
