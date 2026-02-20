@@ -1,16 +1,109 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { Movie } from '../types/movie'
+import { getPopularMovies } from '../api/movieService'
 
 function Home() {
+  const [movies, setMovies] = useState<Movie[]>([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadMovies = async (pageToLoad: number) => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getPopularMovies(pageToLoad)
+      setMovies((prev) =>
+        pageToLoad === 1 ? data.results : [...prev, ...data.results],
+      )
+      setPage(data.page)
+      setTotalPages(data.total_pages)
+    } catch {
+      setError('Erro ao carregar filmes populares.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadMovies(1)
+  }, [])
+
+  const handleLoadMore = () => {
+    if (page < totalPages && !loading) {
+      loadMovies(page + 1)
+    }
+  }
+
   return (
-    <div>
-      <h1>Home</h1>
-      <p>Lista de filmes populares virá aqui.</p>
-      <p>
-        Exemplo de navegação: <Link to="/movie/1">Ver detalhes do filme 1</Link>
-      </p>
-    </div>
+    <main style={{ padding: '2rem' }}>
+      <h1>Filmes populares</h1>
+
+      {error && <p>{error}</p>}
+
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+          gap: '1rem',
+          marginTop: '1.5rem',
+        }}
+      >
+        {movies.map((movie) => (
+          <article
+            key={movie.id}
+            style={{
+              backgroundColor: '#1f2933',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          >
+            <Link
+              to={`/movie/${movie.id}`}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
+              {movie.poster_path && (
+                <img
+                  src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
+                  alt={movie.title}
+                  style={{ width: '100%', display: 'block' }}
+                />
+              )}
+              <div style={{ padding: '0.75rem' }}>
+                <h2
+                  style={{
+                    fontSize: '1rem',
+                    margin: '0 0 0.5rem',
+                  }}
+                >
+                  {movie.title}
+                </h2>
+                <p
+                  style={{
+                    fontSize: '0.875rem',
+                    margin: 0,
+                    opacity: 0.8,
+                  }}
+                >
+                  Nota: {movie.vote_average.toFixed(1)}
+                </p>
+              </div>
+            </Link>
+          </article>
+        ))}
+      </section>
+
+      {movies.length > 0 && page < totalPages && (
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <button type="button" onClick={handleLoadMore} disabled={loading}>
+            {loading ? 'Carregando...' : 'Carregar mais'}
+          </button>
+        </div>
+      )}
+    </main>
   )
 }
 
 export default Home
-
